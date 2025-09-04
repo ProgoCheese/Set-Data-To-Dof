@@ -5,24 +5,48 @@ using System.IO;
 public class ImageRenderer : MonoBehaviour
 {
     [Header("UI элементы")]
-    public RawImage previewImage;       // превью пользователю
-    public InputField inputField1;      // первое поле ввода
-    public InputField inputField2;      // второе поле ввода
+    public RawImage previewImage;
+
+    // 6 полей ввода
+    public InputField dataGoTimeInputField;
+    public InputField dataGoDataInputField;
+    public InputField dataComeTimeInputField;
+    public InputField dataComeDataInputField;
+    public InputField dataCreateTimeInputField;
+    public InputField dataCreateDataInputField;
+
+    [Header("Месяц")]
+    public Dropdown monthDropdown;
+    public Sprite[] months1; // 12 спрайтов
+    public Sprite[] months2; // 12 спрайтов
+    public Sprite[] months3; // 12 спрайтов
+    public RectTransform digitsParentMonth;
 
     [Header("Скрытый Canvas")]
-    public Canvas renderCanvas;         // Canvas для рендера
-    public RawImage backgroundImage;    // фон
-    public RectTransform digitsParent1; // контейнер для текста 1
-    public RectTransform digitsParent2; // контейнер для текста 2
-    public GameObject digitPrefab;      // префаб символа (Image)
+    public Canvas renderCanvas;
+    public RawImage backgroundImage;
+    public RectTransform digitsParentTimeGoAway;
+    public RectTransform digitsParentDataGoAway;
+    public RectTransform digitsParentTimeComeback;
+    public RectTransform digitsParentDataComeback;
+    public RectTransform digitsParentCreateDay;
+    public RectTransform digitsParentYearCreate;
+    public GameObject digitPrefab;
     public Camera renderCamera;
     public RenderTexture renderTexture;
 
     [Header("Наборы символов")]
     public Sprite[] numbers1; // [0–9], [10]=":", [11]="."
-    public Sprite[] numbers2; // [0–9], [10]=":", [11]="."
-    public Sprite[] numbers3; // [0–9], [10]=":", [11]="."
-    public Sprite space;      // пробел
+    public Sprite[] numbers2;
+    public Sprite[] numbers3;
+    public Sprite[] numbers4;
+    public Sprite[] numbers5;
+    public Sprite[] numbers6;
+    public Sprite[] numbers7;
+    public Sprite[] numbers8;
+    public Sprite[] numbers9;
+    public Sprite[] numbers10;
+    public Sprite space;
 
     [Header("Настройки символов")]
     public Vector2 digitSize = new Vector2(15, 30);
@@ -38,15 +62,12 @@ public class ImageRenderer : MonoBehaviour
                 Texture2D texture = NativeGallery.LoadImageAtPath(path, 2048);
                 if (texture != null)
                 {
-                    // превью пользователю
                     previewImage.texture = texture;
                     previewImage.SetNativeSize();
 
-                    // фон скрытого Canvas
                     backgroundImage.texture = texture;
                     backgroundImage.SetNativeSize();
 
-                    // растягиваем под Canvas
                     RectTransform rt = backgroundImage.GetComponent<RectTransform>();
                     rt.anchorMin = Vector2.zero;
                     rt.anchorMax = Vector2.one;
@@ -62,19 +83,25 @@ public class ImageRenderer : MonoBehaviour
     {
         renderCanvas.gameObject.SetActive(true);
 
-        // генерируем текст в двух местах
-        GenerateImage(inputField1.text, digitsParent1);
-        GenerateImage(inputField2.text, digitsParent2);
+        // генерируем текст в 6 местах
+        GenerateImage(dataGoTimeInputField.text, digitsParentTimeGoAway);
+        GenerateImage(dataGoDataInputField.text, digitsParentDataGoAway);
+        GenerateImage(dataComeTimeInputField.text, digitsParentTimeComeback);
+        GenerateImage(dataComeDataInputField.text, digitsParentDataComeback);
+        GenerateImage(dataCreateTimeInputField.text, digitsParentCreateDay);
+        GenerateImage(dataCreateDataInputField.text, digitsParentYearCreate);
+
+        // генерируем месяц
+        GenerateMonth(digitsParentMonth);
 
         SaveFinalImage();
 
         renderCanvas.gameObject.SetActive(false);
     }
 
-    // Создание текста в указанном контейнере
+    // Создание текста (цифры, точки, пробелы, двоеточие)
     private void GenerateImage(string text, RectTransform parent)
     {
-        // очистка старого текста
         foreach (Transform child in parent)
             Destroy(child.gameObject);
 
@@ -87,8 +114,7 @@ public class ImageRenderer : MonoBehaviour
             if (char.IsDigit(c))
             {
                 int digit = c - '0';
-                int randomSet = UnityEngine.Random.Range(1, 4);
-
+                int randomSet = UnityEngine.Random.Range(1, 11);
                 switch (randomSet)
                 {
                     case 1: charSprite = numbers1[digit]; break;
@@ -102,7 +128,7 @@ public class ImageRenderer : MonoBehaviour
             }
             else if (c == ':')
             {
-                int randomSet = UnityEngine.Random.Range(1, 4);
+                int randomSet = UnityEngine.Random.Range(1, 11);
                 switch (randomSet)
                 {
                     case 1: charSprite = numbers1[10]; break;
@@ -112,7 +138,7 @@ public class ImageRenderer : MonoBehaviour
             }
             else if (c == '.')
             {
-                int randomSet = UnityEngine.Random.Range(1, 4);
+                int randomSet = UnityEngine.Random.Range(1, 11);
                 switch (randomSet)
                 {
                     case 1: charSprite = numbers1[11]; break;
@@ -134,6 +160,37 @@ public class ImageRenderer : MonoBehaviour
                 startX += digitSpacing;
             }
         }
+    }
+
+    // Генерация месяца
+    private void GenerateMonth(RectTransform parent)
+    {
+        foreach (Transform child in parent)
+            Destroy(child.gameObject);
+
+        int monthIndex = monthDropdown.value;
+        if (monthIndex < 0 || monthIndex >= 12) return;
+
+        // выбираем случайный набор
+        int randomSet = UnityEngine.Random.Range(1, 4);
+        Sprite monthSprite = null;
+
+        switch (randomSet)
+        {
+            case 1: monthSprite = months1[monthIndex]; break;
+            case 2: monthSprite = months2[monthIndex]; break;
+            case 3: monthSprite = months3[monthIndex]; break;
+        }
+
+        if (monthSprite == null) return;
+
+        GameObject go = Instantiate(digitPrefab, parent);
+        Image img = go.GetComponent<Image>();
+        img.sprite = monthSprite;
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(80, 40);  // подогнать под размер месяца
+        rt.anchoredPosition = Vector2.zero;
     }
 
     // Сохраняем итоговую картинку
