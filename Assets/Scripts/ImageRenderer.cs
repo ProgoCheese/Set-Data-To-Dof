@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
+using UnityEngine.UIElements;
 
 public class ImageRenderer : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class ImageRenderer : MonoBehaviour
     public InputField dataComeDataInputField;
     public InputField dataCreateTimeInputField;
     public InputField dataCreateDataInputField;
+
+    public UnityEngine.UI.Toggle myToggle;
 
     [Header("Месяц")]
     public Dropdown monthDropdown;
@@ -31,12 +34,14 @@ public class ImageRenderer : MonoBehaviour
     public RectTransform digitsParentDataComeback;
     public RectTransform digitsParentCreateDay;
     public RectTransform digitsParentYearCreate;
+    public RectTransform toggleParentOn; 
+    public RectTransform toggleParentOff;
     public GameObject digitPrefab;
     public Camera renderCamera;
     public RenderTexture renderTexture;
 
-    [Header("Наборы символов")]
-    public Sprite[] numbers1; // [0–9], [10]=":", [11]="."
+    [Header("Наборы символов (10 массивов)")]
+    public Sprite[] numbers1;
     public Sprite[] numbers2;
     public Sprite[] numbers3;
     public Sprite[] numbers4;
@@ -47,10 +52,14 @@ public class ImageRenderer : MonoBehaviour
     public Sprite[] numbers9;
     public Sprite[] numbers10;
     public Sprite space;
+    public Sprite toggleSpriteOn;
+    public Sprite toggleSpriteOff;
 
-    [Header("Настройки символов")]
-    public Vector2 digitSize = new Vector2(15, 30);
+    [Header("Расстояние между символами")]
     public float digitSpacing = 17f;
+
+    [Header("Материал для цифр (шейдер WhiteToTransparent)")]
+    public Material digitMaterial;
 
     // Кнопка "Выбрать картинку"
     public void PickImage()
@@ -78,6 +87,38 @@ public class ImageRenderer : MonoBehaviour
         }, "Выберите изображение", "image/*");
     }
 
+    private void GenerateToggleImage()
+    {
+        // очищаем оба места
+        foreach (Transform child in toggleParentOn)
+            Destroy(child.gameObject);
+        foreach (Transform child in toggleParentOff)
+            Destroy(child.gameObject);
+
+        if (myToggle.isOn)
+        {
+            // если включен → вставляем картинку в toggleParentOn
+            GameObject go = Instantiate(digitPrefab, toggleParentOn);
+            UnityEngine.UI.Image img = go.GetComponent<UnityEngine.UI.Image>();
+            img.sprite = toggleSpriteOn;
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(toggleSpriteOn.rect.width, toggleSpriteOn.rect.height);
+            rt.anchoredPosition = Vector2.zero;
+        }
+        else
+        {
+            // если выключен → вставляем картинку в toggleParentOff
+            GameObject go = Instantiate(digitPrefab, toggleParentOff);
+            UnityEngine.UI.Image img = go.GetComponent<UnityEngine.UI.Image>();
+            img.sprite = toggleSpriteOff;
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(toggleSpriteOff.rect.width, toggleSpriteOff.rect.height);
+            rt.anchoredPosition = Vector2.zero;
+        }
+    }
+
     // Кнопка "Сохранить"
     public void SaveImage()
     {
@@ -94,6 +135,8 @@ public class ImageRenderer : MonoBehaviour
         // генерируем месяц
         GenerateMonth(digitsParentMonth);
 
+        GenerateToggleImage();
+
         SaveFinalImage();
 
         renderCanvas.gameObject.SetActive(false);
@@ -105,7 +148,7 @@ public class ImageRenderer : MonoBehaviour
         foreach (Transform child in parent)
             Destroy(child.gameObject);
 
-        float startX = -200f;
+        float startX = 0f;
 
         foreach (char c in text)
         {
@@ -120,6 +163,13 @@ public class ImageRenderer : MonoBehaviour
                     case 1: charSprite = numbers1[digit]; break;
                     case 2: charSprite = numbers2[digit]; break;
                     case 3: charSprite = numbers3[digit]; break;
+                    case 4: charSprite = numbers4[digit]; break;
+                    case 5: charSprite = numbers5[digit]; break;
+                    case 6: charSprite = numbers6[digit]; break;
+                    case 7: charSprite = numbers7[digit]; break;
+                    case 8: charSprite = numbers8[digit]; break;
+                    case 9: charSprite = numbers9[digit]; break;
+                    case 10: charSprite = numbers10[digit]; break;
                 }
             }
             else if (c == ' ')
@@ -134,6 +184,13 @@ public class ImageRenderer : MonoBehaviour
                     case 1: charSprite = numbers1[10]; break;
                     case 2: charSprite = numbers2[10]; break;
                     case 3: charSprite = numbers3[10]; break;
+                    case 4: charSprite = numbers4[10]; break;
+                    case 5: charSprite = numbers5[10]; break;
+                    case 6: charSprite = numbers6[10]; break;
+                    case 7: charSprite = numbers7[10]; break;
+                    case 8: charSprite = numbers8[10]; break;
+                    case 9: charSprite = numbers9[10]; break;
+                    case 10: charSprite = numbers10[10]; break;
                 }
             }
             else if (c == '.')
@@ -144,20 +201,33 @@ public class ImageRenderer : MonoBehaviour
                     case 1: charSprite = numbers1[11]; break;
                     case 2: charSprite = numbers2[11]; break;
                     case 3: charSprite = numbers3[11]; break;
+                    case 4: charSprite = numbers4[11]; break;
+                    case 5: charSprite = numbers5[11]; break;
+                    case 6: charSprite = numbers6[11]; break;
+                    case 7: charSprite = numbers7[11]; break;
+                    case 8: charSprite = numbers8[11]; break;
+                    case 9: charSprite = numbers9[11]; break;
+                    case 10: charSprite = numbers10[11]; break;
                 }
             }
 
             if (charSprite != null)
             {
                 GameObject go = Instantiate(digitPrefab, parent);
-                Image img = go.GetComponent<Image>();
+                UnityEngine.UI.Image img = go.GetComponent<UnityEngine.UI.Image>();
                 img.sprite = charSprite;
 
+                // Автоматически ставим материал с шейдером
+                if (digitMaterial != null)
+                {
+                    img.material = digitMaterial;
+                }
+
                 RectTransform rt = go.GetComponent<RectTransform>();
-                rt.sizeDelta = digitSize;
+                rt.sizeDelta = new Vector2(charSprite.rect.width, charSprite.rect.height); // используем исходный размер
                 rt.anchoredPosition = new Vector2(startX, 0);
 
-                startX += digitSpacing;
+                startX += charSprite.rect.width + digitSpacing; // учитываем реальную ширину спрайта
             }
         }
     }
@@ -171,7 +241,6 @@ public class ImageRenderer : MonoBehaviour
         int monthIndex = monthDropdown.value;
         if (monthIndex < 0 || monthIndex >= 12) return;
 
-        // выбираем случайный набор
         int randomSet = UnityEngine.Random.Range(1, 4);
         Sprite monthSprite = null;
 
@@ -185,11 +254,16 @@ public class ImageRenderer : MonoBehaviour
         if (monthSprite == null) return;
 
         GameObject go = Instantiate(digitPrefab, parent);
-        Image img = go.GetComponent<Image>();
+        UnityEngine.UI.Image img = go.GetComponent<UnityEngine.UI.Image>();
         img.sprite = monthSprite;
 
+        if (digitMaterial != null)
+        {
+            img.material = digitMaterial;
+        }
+
         RectTransform rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(80, 40);  // подогнать под размер месяца
+        rt.sizeDelta = new Vector2(monthSprite.rect.width, monthSprite.rect.height); // исходный размер
         rt.anchoredPosition = Vector2.zero;
     }
 
@@ -209,10 +283,10 @@ public class ImageRenderer : MonoBehaviour
         RenderTexture.active = currentRT;
 
         byte[] pngData = result.EncodeToPNG();
-        string path = Path.Combine(Application.persistentDataPath, "final_image.png");
+        string path = Path.Combine(Application.persistentDataPath, "Заявление_уезд.png");
         File.WriteAllBytes(path, pngData);
 
-        NativeGallery.SaveImageToGallery(path, "MyApp", "final_image.png");
+        NativeGallery.SaveImageToGallery(path, "MyApp", "Заявление_уезд.png");
         Debug.Log("Изображение сохранено: " + path);
     }
 }
