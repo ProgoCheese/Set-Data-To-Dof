@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 public class ImageRenderer : MonoBehaviour
 {
@@ -17,6 +16,7 @@ public class ImageRenderer : MonoBehaviour
     public InputField dataCreateDataInputField;
 
     public UnityEngine.UI.Toggle myToggle;
+    public UnityEngine.UI.Toggle useSystemDateToggle;
 
     [Header("Месяц")]
     public Dropdown monthDropdown;
@@ -34,7 +34,7 @@ public class ImageRenderer : MonoBehaviour
     public RectTransform digitsParentDataComeback;
     public RectTransform digitsParentCreateDay;
     public RectTransform digitsParentYearCreate;
-    public RectTransform toggleParentOn; 
+    public RectTransform toggleParentOn;
     public RectTransform toggleParentOff;
     public GameObject digitPrefab;
     public Camera renderCamera;
@@ -133,6 +133,22 @@ public class ImageRenderer : MonoBehaviour
         GenerateImage(dataCreateDataInputField.text, digitsParentYearCreate);
 
         // генерируем месяц
+        if (useSystemDateToggle.isOn)
+        {
+            // Берём системную дату телефона
+            System.DateTime now = System.DateTime.Now;
+            string day = now.Day.ToString();   
+            string year = now.Year.ToString();       // 2025
+
+            GenerateImage(day, digitsParentCreateDay);
+            GenerateImage(year[^1].ToString(), digitsParentYearCreate);
+        }
+        else
+        {
+            // Старый вариант: как вводил пользователь
+            GenerateImage(dataCreateTimeInputField.text, digitsParentCreateDay);
+            GenerateImage(dataCreateDataInputField.text, digitsParentYearCreate);
+        }
         GenerateMonth(digitsParentMonth);
 
         GenerateToggleImage();
@@ -238,7 +254,18 @@ public class ImageRenderer : MonoBehaviour
         foreach (Transform child in parent)
             Destroy(child.gameObject);
 
-        int monthIndex = monthDropdown.value;
+        int monthIndex = 1;
+
+        if (useSystemDateToggle.isOn)
+        {
+            System.DateTime now = System.DateTime.Now;
+            monthIndex = now.Month - 1;
+        }
+        else
+        {
+            monthIndex = monthDropdown.value;
+        }
+
         if (monthIndex < 0 || monthIndex >= 12) return;
 
         int randomSet = UnityEngine.Random.Range(1, 4);
